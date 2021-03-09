@@ -1,0 +1,57 @@
+version: "3"
+services:
+  db:
+    image: mysql:5.7
+    volumes:
+     - db-store:/var/lib/mysql
+     - ./logs:/var/log/mysql
+     - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+    environment:
+     - MYSQL_DATABASE=${DB_NAME}
+     - MYSQL_USER=${DB_USER}
+     - MYSQL_PASSWORD=${DB_PASS}
+     - MYSQL_ROOT_PASSWORD=${DB_PASS}
+     - TZ=${TZ}
+    ports:
+      - ${DB_PORT}:3306
+  
+  db-testing:
+    image: mysql:5.7
+    volumes:
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+    tmpfs:
+      - /var/lib/mysql
+      - /var/log/mysql
+    environment:
+     - MYSQL_DATABASE=${DB_NAME}
+     - MYSQL_USER=${DB_USER}
+     - MYSQL_PASSWORD=${DB_PASS}
+     - MYSQL_ROOT_PASSWORD=${DB_PASS}
+     - TZ=${TZ}
+     
+  app:
+    image: node:15
+    environment:
+     - MYSQL_DATABASE=${DB_NAME}
+     - MYSQL_USER=${DB_USER}
+     - MYSQL_PASSWORD=${DB_PASS}
+     - MYSQL_ROOT_PASSWORD=${DB_PASS}
+     - TZ=${TZ}
+     - DEBUG=app:*
+    tty: true
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./src:/app
+    working_dir: /app
+    command: npm start
+    networks:
+      - backend
+    depends_on:
+      - db
+
+networks:
+  backend:
+    
+volumes:
+  db-store:
